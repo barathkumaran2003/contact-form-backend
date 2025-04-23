@@ -34,6 +34,13 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
+transporter.verify(function(error, success) {
+  if (error) {
+    console.error('Email config error:', error);
+  } else {
+    console.log('Server is ready to send emails');
+  }
+});
 
 // Define the POST route
 app.post('/contact', async (req, res) => {
