@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = 5000;
@@ -14,8 +15,6 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log("Connected to MongoDB Atlas"))
   .catch((err) => console.error("Connection error", err));
 
-
-
 // Define a schema
 const contactSchema = new mongoose.Schema({
   name: String,
@@ -27,21 +26,44 @@ const contactSchema = new mongoose.Schema({
 // Create a model
 const Contact = mongoose.model('Contact', contactSchema);
 
+// Nodemailer transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // or another like 'hotmail', 'yahoo', etc.
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 // Define the POST route
 app.post('/contact', async (req, res) => {
+  const { name, email, phone, message } = req.body;
+
   try {
     const newContact = new Contact(req.body);
     await newContact.save();
-    res.status(201).json({ message: 'Form data saved successfully!' });
+
+    // Send email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_RECEIVER, // your receiving email
+      subject: 'New Contact Form Submission',
+      html: `<p><strong>Name:</strong> ${name}</p>
+             <p><strong>Email:</strong> ${email}</p>
+             <p><strong>Phone:</strong> ${phone}</p>
+             <p><strong>Message:</strong> ${message}</p>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(201).json({ message: 'Form data saved and email sent successfully!' });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error', error: err });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
-
+// Get all contacts
 app.get('/api/contact', async (req, res) => {
   try {
     const contacts = await Contact.find();
@@ -49,4 +71,8 @@ app.get('/api/contact', async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Error fetching contacts', error: err });
   }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
