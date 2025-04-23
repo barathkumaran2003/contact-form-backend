@@ -65,9 +65,9 @@ app.post('/contact', async (req, res) => {
 
     res.status(201).json({ message: 'Form data saved and email sent successfully!' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error', error: err });
-  }
+    console.error('Email send error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  } 
 });
 
 // Get all contacts
