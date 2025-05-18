@@ -66,6 +66,7 @@ app.post('/contact', async (req, res) => {
 
     await transporter.sendMail(mailOptions);
     res.status(201).json({ message: `Thank you ${name}, your response has been saved.` });
+    res.json({ sample:`${name}` });
   } catch (err) {
     console.error('Email send error:', err);
     res.status(500).json({ message: 'Data saved but email not send', error: err.message });
